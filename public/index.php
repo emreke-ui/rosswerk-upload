@@ -151,6 +151,22 @@ if ($pfad === '/api/upload') {
     ]);
 }
 
+/* ---------- Einzelne Datei wieder entfernen ---------- */
+if ($pfad === '/api/remove') {
+    if ($method !== 'POST') json(405, ['ok' => false, 'fehler' => 'Nur POST erlaubt.']);
+    $o = $_SERVER['HTTP_ORIGIN'] ?? '';
+    if ($o !== '' && !in_array($o, ORIGINS, true)) {
+        json(403, ['ok' => false, 'fehler' => 'Herkunft nicht erlaubt.']);
+    }
+    $id = (string)($_POST['id'] ?? '');
+    if (!preg_match('/^[a-f0-9]{32}$/', $id)) json(400, ['ok' => false, 'fehler' => 'Unbekannter Stapel.']);
+    $datei = STORE . '/' . $id . '/' . basename((string)($_POST['name'] ?? ''));
+    if (is_file($datei)) @unlink($datei);
+    $rest = count(array_filter(glob(STORE . '/' . $id . '/*') ?: [], 'is_file'));
+    if ($rest === 0) @rmdir(STORE . '/' . $id);
+    json(200, ['ok' => true, 'rest' => $rest]);
+}
+
 /* ---------- Abholseite ---------- */
 if (preg_match('#^/f/([a-f0-9]{32})/?$#', $pfad, $m)) {
     $dir = STORE . '/' . $m[1];
