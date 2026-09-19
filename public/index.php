@@ -101,8 +101,15 @@ if ($pfad === '/api/upload') {
             $fehler[] = safeName((string)$name) . ': Mehr als ' . MAX_FILES . ' Dateien sind nicht moeglich.';
             continue;
         }
-        if (($eingang['error'][$i] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
-            $fehler[] = safeName((string)$name) . ': Uebertragung fehlgeschlagen.';
+        $code = $eingang['error'][$i] ?? UPLOAD_ERR_NO_FILE;
+        if ($code !== UPLOAD_ERR_OK) {
+            $grund = match ($code) {
+                UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'groesser als 15 MB.',
+                UPLOAD_ERR_PARTIAL                        => 'nur teilweise uebertragen.',
+                UPLOAD_ERR_NO_FILE                        => 'keine Datei.',
+                default                                   => 'Uebertragung fehlgeschlagen.',
+            };
+            $fehler[] = safeName((string)$name) . ': ' . $grund;
             continue;
         }
         $tmp = $eingang['tmp_name'][$i];
