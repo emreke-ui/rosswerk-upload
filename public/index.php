@@ -65,6 +65,9 @@ if ($method === 'OPTIONS') { http_response_code(204); exit; }
 
 /* ---------- Gesundheitscheck ---------- */
 if ($pfad === '/health') {
+    // Offen fuer jede Herkunft: der Check verraet nichts und muss auch aus
+    // Vorschau-/Testumgebungen heraus funktionieren.
+    header('Access-Control-Allow-Origin: *');
     json(200, ['ok' => true, 'dienst' => 'rosswerk-upload', 'zeit' => gmdate('c')]);
 }
 
