@@ -8,7 +8,9 @@ declare(strict_types=1);
  * Formularfeld in die bestehende Framer-Benachrichtigung — kein SMTP noetig.
  */
 
-const STORE      = '/home/ploi/upload.rosswerk.de/storage';
+// Speicherort liegt NEBEN dem oeffentlichen Verzeichnis, nie darin.
+// Aus __DIR__ abgeleitet, damit derselbe Stand auf jeder Domain laeuft.
+define('STORE', dirname(__DIR__) . '/storage');
 const MAX_FILES  = 10;
 const MAX_BYTES  = 15 * 1024 * 1024;   // 15 MB je Datei
 const KEEP_DAYS  = 90;
