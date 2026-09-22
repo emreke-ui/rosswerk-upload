@@ -1,0 +1,81 @@
+<script id="rw-upload-feld">
+/* ROSSWERK — Dokumenten-Upload fuer die Framer-Formulare.
+   Framer kennt kein Datei-Feld (nur Text, Checkbox, Auswahl). Dieses Skript haengt
+   ein eigenes Feld an das bestehende Formular, laedt die Datei sofort zu unserem
+   Endpunkt hoch und schreibt den Abhol-Link in ein verstecktes Textfeld des
+   Framer-Formulars. Dadurch kommt der Link mit der normalen Benachrichtigung an.
+
+   Aktiv auf: /ueber-uns (Bewerbung) und den Leistungsseiten (Anfrage). */
+(function () {
+  var ENDPUNKT = "https://upload-rosswerk.nxtyou.dev/api/upload";
+  var MAX_MB = 15, MAX_DATEIEN = 10;
+  var SAND = "#F2BD91", GRAU = "#B6BCC9";
+
+  function bauen(form) {
+    if (form.dataset.rwUpload) return;
+    form.dataset.rwUpload = "1";
+
+    var wrap = document.createElement("div");
+    wrap.style.cssText = "margin-top:18px";
+    wrap.innerHTML =
+      '<label style="display:block;font:600 13px/1.4 Manrope,sans-serif;color:#fff;margin-bottom:8px">Unterlagen (optional)</label>' +
+      '<label class="rw-up-drop" style="display:flex;align-items:center;gap:12px;border:1px dashed rgba(255,255,255,.25);border-radius:8px;padding:14px 16px;cursor:pointer;background:#141414">' +
+        '<span style="font:400 14px/1.4 Manrope,sans-serif;color:' + GRAU + '">Dateien auswählen — Bilder oder PDF, je bis ' + MAX_MB + ' MB</span>' +
+        '<input type="file" multiple accept="image/jpeg,image/png,image/webp,image/heic,application/pdf" style="display:none">' +
+      '</label>' +
+      '<div class="rw-up-liste" style="font:400 13px/1.7 Manrope,sans-serif;color:' + GRAU + ';margin-top:8px"></div>' +
+      '<input type="hidden" name="Unterlagen" value="">';
+
+    var feld = wrap.querySelector('input[type=file]');
+    var liste = wrap.querySelector('.rw-up-liste');
+    var versteckt = wrap.querySelector('input[type=hidden]');
+    var stapelId = null;
+
+    function melden(text, farbe) { liste.innerHTML = '<span style="color:' + (farbe || GRAU) + '">' + text + '</span>'; }
+
+    feld.addEventListener("change", function () {
+      var dateien = Array.prototype.slice.call(feld.files || []);
+      if (!dateien.length) return;
+      if (dateien.length > MAX_DATEIEN) { melden("Bitte höchstens " + MAX_DATEIEN + " Dateien.", SAND); return; }
+      var zuGross = dateien.filter(function (f) { return f.size > MAX_MB * 1024 * 1024; });
+      if (zuGross.length) { melden("Zu groß: " + zuGross.map(function (f) { return f.name; }).join(", "), SAND); return; }
+
+      melden("Wird hochgeladen …");
+      var fd = new FormData();
+      dateien.forEach(function (f) { fd.append("files[]", f); });
+      if (stapelId) fd.append("id", stapelId);
+
+      fetch(ENDPUNKT, { method: "POST", body: fd })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d || !d.ok) { melden((d && d.fehler) || "Upload nicht möglich.", SAND); return; }
+          stapelId = d.id;
+          versteckt.value = d.link;
+          liste.innerHTML = d.dateien.map(function (f) {
+            return '<div>✓ ' + f.name + '</div>';
+          }).join("") + '<div style="color:' + SAND + ';margin-top:4px">Übertragen — der Link geht mit Ihrer Anfrage raus.</div>';
+        })
+        .catch(function () { melden("Upload nicht möglich. Bitte senden Sie die Unterlagen per E-Mail.", SAND); });
+    });
+
+    var knopf = form.querySelector('button[type=submit], input[type=submit]');
+    if (knopf && knopf.parentElement) knopf.parentElement.insertBefore(wrap, knopf);
+    else form.appendChild(wrap);
+  }
+
+  function suchen() {
+    document.querySelectorAll("form").forEach(bauen);
+    // Framer rendert Formulare teilweise ohne <form>; dann am Absende-Knopf andocken.
+    if (!document.querySelector("form")) {
+      var k = Array.prototype.slice.call(document.querySelectorAll("button, a"))
+        .filter(function (e) { return /Bewerbung senden|Anfrage senden/i.test(e.textContent || ""); })[0];
+      if (k) {
+        var box = k.closest("div");
+        if (box && !box.dataset.rwUpload) { box.dataset.rwUpload = "1"; bauen(box); }
+      }
+    }
+  }
+  var n = 0, t = setInterval(function () { n++; suchen(); if (n > 40) clearInterval(t); }, 250);
+  addEventListener("load", suchen);
+})();
+</script>
