@@ -103,14 +103,14 @@ if ($pfad === '/api/upload') {
 
     foreach ($eingang['name'] as $i => $name) {
         if ($vorhanden + count($gespeichert) >= MAX_FILES) {
-            $fehler[] = safeName((string)$name) . ': Mehr als ' . MAX_FILES . ' Dateien sind nicht moeglich.';
+            $fehler[] = safeName((string)$name) . ': Mehr als ' . MAX_FILES . ' Dateien sind nicht möglich.';
             continue;
         }
         $code = $eingang['error'][$i] ?? UPLOAD_ERR_NO_FILE;
         if ($code !== UPLOAD_ERR_OK) {
             $grund = match ($code) {
-                UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'groesser als 15 MB.',
-                UPLOAD_ERR_PARTIAL                        => 'nur teilweise uebertragen.',
+                UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'größer als 15 MB.',
+                UPLOAD_ERR_PARTIAL                        => 'nur teilweise übertragen.',
                 UPLOAD_ERR_NO_FILE                        => 'keine Datei.',
                 default                                   => 'Uebertragung fehlgeschlagen.',
             };
@@ -120,7 +120,7 @@ if ($pfad === '/api/upload') {
         $tmp = $eingang['tmp_name'][$i];
         if (!is_uploaded_file($tmp)) { $fehler[] = safeName((string)$name) . ': ungueltig.'; continue; }
         if (filesize($tmp) > MAX_BYTES) {
-            $fehler[] = safeName((string)$name) . ': groesser als 15 MB.';
+            $fehler[] = safeName((string)$name) . ': größer als 15 MB.';
             continue;
         }
         $typ = $finfo->file($tmp) ?: '';
@@ -185,7 +185,7 @@ if (preg_match('#^/f/([a-f0-9]{32})/?$#', $pfad, $m)) {
     echo 'p{color:#B6BCC9;margin:0 0 24px}a{color:#F2BD91}';
     echo 'ul{list-style:none;padding:0;max-width:640px}li{border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:14px 18px;margin:0 0 10px;display:flex;justify-content:space-between;gap:16px}';
     echo 'small{color:#B6BCC9}</style>';
-    echo '<h1>Kundenupload</h1><p>' . count($dateien) . ' Datei(en) &middot; verfuegbar bis ' . $ablauf . '</p><ul>';
+    echo '<h1>Kundenupload</h1><p>' . count($dateien) . ' Datei(en) &middot; verfügbar bis ' . $ablauf . '</p><ul>';
     foreach ($dateien as $f) {
         $n = rawurlencode(basename($f));
         echo '<li><a href="/f/' . $m[1] . '/' . $n . '">' . htmlspecialchars(basename($f)) . '</a>';
